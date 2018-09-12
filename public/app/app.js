@@ -1,11 +1,18 @@
 import './utils/array-helpers.js';
 import { notaService as service } from './nota/service.js';
+import { takeUntil, debounceTime, pipe, partialize } from './utils/operators.js';
+import { timeoutPromise, retry } from './utils/promise-helpers.js';
+
+const operations = pipe(
+  partialize(takeUntil, 3),
+  partialize(debounceTime, 500)
+);
+
+const action = operations(() =>
+  retry(3, 3000, () => timeoutPromise(200, service.sumItems('2143')))
+    .then(console.log)
+    .catch(console.log));
 
 document
   .querySelector('#myButton')
-  .onclick = () => {
-    service
-      .sumItems('2143')
-      .then(console.log)
-      .catch(console.log);
-  };
+  .onclick = action;
